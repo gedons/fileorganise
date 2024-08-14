@@ -16,7 +16,7 @@ router.put('/rename', protect, renameFolder);
 // @route   DELETE /api/folders
 // @desc    Delete a folder
 // @access  Private
-router.delete('/', protect, deleteFolder);
+router.delete('/:folderId', protect, deleteFolder);
 
 // @route   GET /api/folders
 // @desc    Get all folders with their files

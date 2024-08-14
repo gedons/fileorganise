@@ -1,44 +1,58 @@
 const File = require('../models/File');
 const { uploadFile, moveFile, deleteFile } = require('../services/s3Service');
-  
+const mongoose = require('mongoose');
 
 exports.uploadFile = async (req, res) => {
     const { originalname, buffer, mimetype } = req.file;
     const userId = req.user.id;
-    const folderPath = req.body.folderPath || '';   
-    const folderId = req.body.folderId || null;  
-
+    const folderPath = req.body.folderPath || '';
+    
+    let folderId = req.body.folderId || null; 
+  
     try {
-        // Upload the file to S3, include folder path in the key
-        const s3Response = await uploadFile(buffer, originalname, folderPath);
-
-        // Save file metadata to MongoDB
-        const file = new File({
-            user: userId,
-            fileName: originalname,
-            s3Key: s3Response.Key,
-            s3Url: s3Response.Location,
-            fileType: mimetype,
-            folder: folderId   
-        });
-
-        await file.save();
-
-        res.status(201).json({
-            message: 'File uploaded successfully',
-            file,
-        });
+       
+      if (folderId) {
+        folderId = mongoose.Types.ObjectId(folderId);
+      }
+  
+      // Upload the file to S3, include folder path in the key
+      const s3Response = await uploadFile(buffer, originalname, folderPath);
+  
+      // Save file metadata to MongoDB
+      const file = new File({
+        user: userId,
+        fileName: originalname,
+        s3Key: s3Response.Key,
+        s3Url: s3Response.Location,
+        fileType: mimetype,
+        folder: folderId  
+      });
+  
+      await file.save();
+  
+      res.status(201).json({
+        message: 'File uploaded successfully',
+        file,
+      });
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server error');
+      console.error(error.message);
+      res.status(500).send('Server error');
     }
 };
-
+  
 // Move a file to a folder
 exports.moveFile = async (req, res) => {
     const fileId = req.params.id;
     const userId = req.user.id;
     const { destinationFolder, folderId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(fileId)) {
+        return res.status(400).json({ message: 'Invalid file ID' });
+    }
+
+    if (folderId && !mongoose.Types.ObjectId.isValid(folderId)) {
+        return res.status(400).json({ message: 'Invalid folder ID' });
+    }
 
     try {
         const file = await File.findById(fileId);
@@ -53,6 +67,7 @@ exports.moveFile = async (req, res) => {
         // Log the current key and destination for debugging
         console.log('Original S3 Key:', encodedKey);
         console.log('Destination Folder:', destinationFolder);
+        console.log('Folder ID:', folderId);
 
         // Move the file in S3 (copy to new location)
         const newKey = await moveFile(encodedKey, destinationFolder);
