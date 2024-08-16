@@ -17,7 +17,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/folders', folderRoutes);
 
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+  res.send('Hello World!!!!');
 });
 
 connectDB();
