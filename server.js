@@ -16,11 +16,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/folders', folderRoutes);
 
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
 connectDB();
 
 const PORT = process.env.PORT || 5000;
 
-
-app.listen(PORT, () => {
+ 
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
