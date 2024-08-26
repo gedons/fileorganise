@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { uploadFile, deleteFile, getFiles, moveFile, createFolder, renameFolder, deleteFolder, searchFiles } = require('../controllers/fileController');
+const { uploadFile, deleteFile, getFiles, moveFile, searchFiles, getStorageUsage } = require('../controllers/fileController');
 const { protect } = require('../middleware/authMiddleware');
+const checkStorageLimit = require('../middleware/checkStorageLimit');
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
@@ -10,7 +11,7 @@ const upload = multer({ storage });
 // @route   POST /api/files/upload
 // @desc    Upload a file
 // @access  Private
-router.post('/upload', protect, upload.single('file'), uploadFile);
+router.post('/api/upload',protect, checkStorageLimit, upload.single('file'), uploadFile);
 
 // @route   DELETE /api/files/:id
 // @desc    Delete a file
@@ -28,5 +29,7 @@ router.get('/', protect, getFiles);
 router.put('/:id/move', protect, moveFile);
 
 router.get('/search', protect, searchFiles);
+
+router.get('/storage-usage', protect, getStorageUsage);
 
 module.exports = router;

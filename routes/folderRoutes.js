@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { createFolder, renameFolder, deleteFolder, getAllFoldersWithFiles } = require('../controllers/folderController');
 const { protect } = require('../middleware/authMiddleware');
+const checkStorageLimit = require('../middleware/checkStorageLimit');
 
 // @route   POST /api/folders
 // @desc    Create a folder
 // @access  Private
-router.post('/', protect, createFolder);
+router.post('/', protect, checkStorageLimit, createFolder);
 
 // @route   PUT /api/folders/rename
 // @desc    Rename a folder

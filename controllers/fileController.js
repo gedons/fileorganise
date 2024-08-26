@@ -29,6 +29,10 @@ exports.uploadFile = async (req, res) => {
       });
   
       await file.save();
+
+       // Update the user's storage usage
+       user.storageUsed += buffer.length;
+       await user.save();
   
       res.status(201).json({
         message: 'File uploaded successfully',
@@ -39,6 +43,39 @@ exports.uploadFile = async (req, res) => {
       res.status(500).send('Server error');
     }
 };
+
+//get user storage
+exports.getStorageUsage = async (req, res) => {
+  try {
+      const user = await User.findById(req.user.id);
+      res.status(200).json({
+          storageUsed: user.storageUsed,
+          storageLimit: user.storageLimit
+      });
+  } catch (error) {
+      console.error(error.message);
+      res.status(500).send('Server error');
+  }
+};
+
+// exports.upgradeStoragePlan = async (req, res) => {
+//   const { newLimit } = req.body; // E.g., 5 GB = 5 * 1024 * 1024 * 1024
+
+//   try {
+//       const user = await User.findById(req.user.id);
+//       user.storageLimit = newLimit;
+//       await user.save();
+//       res.status(200).json({
+//           message: 'Storage plan upgraded successfully',
+//           storageLimit: user.storageLimit
+//       });
+//   } catch (error) {
+//       console.error(error.message);
+//       res.status(500).send('Server error');
+//   }
+// };
+
+
   
 // Move a file to a folder
 exports.moveFile = async (req, res) => {

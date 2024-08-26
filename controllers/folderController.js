@@ -6,12 +6,19 @@ const { createFolderInS3, renameFolderInS3, deleteFolderFromS3 } = require('../s
 exports.createFolder = async (req, res) => {
     const { folderName, parentFolderId } = req.body;
     const userId = req.user.id;
+    const folderSize = 1024;
 
     if (!folderName) { 
         return res.status(400).json({ message: 'Folder name is required' });
     }
 
     try {
+         // Check storage limit
+         const user = await User.findById(userId);
+         if (user.storageUsed + folderSize > user.storageLimit) {
+             return res.status(403).json({ message: 'Storage limit exceeded. Please upgrade your plan.' });
+         }
+
         const parentFolder = parentFolderId ? await Folder.findById(parentFolderId) : null;
         const parentFolderPath = parentFolder ? parentFolder.s3Key : '';
         const s3Key = `${parentFolderPath}${folderName}/`;
@@ -26,6 +33,10 @@ exports.createFolder = async (req, res) => {
         });
 
         await folder.save();
+
+        // Update the user's storage usage
+        user.storageUsed += folderSize;
+        await user.save();
 
         res.status(201).json({
             message: 'Folder created successfully',
